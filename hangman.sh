@@ -1,43 +1,41 @@
 #!/bin/sh
 
-###################
-#### FONCTIONS ####
-###################
+#Player 1 is asked for a word
+read -p "Entrez un mot à déviner (EN MINUSCULE) : " random_word
 
-#On demande un mot au Joueur 1
-read -p "Entrez un mot à déviner (EN MINUSCULE) : " motAuHasard
+#FONCTIONS
   
-motCache=$motAuHasard
-listeLettresCachees=azertyuiopqsdfghjklmwxcvbn #On initialise un liste pour rechercher les valeurs trouvés
+hidden_word=$random_word
+letter_list=azertyuiopqsdfghjklmwxcvbn #We initialize a list to search for the values found
 
 
-# Affiche le mot en remplacant les lettre non trouvées par des _
-afficheMot () {
+# Displays the word by replacing the letters not found by _
+display_word () {
   echo $1 | tr $2 '_'
 }
 
 
-# Supprimer un caractère trouvé de la liste des caractères non trouvés
-decouvre () {
-  listeLettresCachees=$(echo $listeLettresCachees | tr -d $1)
+#Remove a found character from the list of characters not found
+discover () {
+  letter_list=$(echo $letter_list | tr -d $1)
 }
 
 
-# Test si le mot contient des caractères cachés
-testGagne (){
-  test=$(afficheMot $1 $2 | sed 's/[^_]*//g')
-  if [ -z "$test" ] ##ERREUR
+# Test if the word contains hidden characters
+test_won (){
+  test=$(display_word $1 $2 | sed 's/[^_]*//g')
+  if [ -z "$test" ] ##ERROR
    then
-     # Le mot caché ne contient plus de caractère caché
+     #The hidden word no longer contains a hidden character
     echo 0
    else
-     # Le mot caché contient encore des caractères cachés
+     #The hidden word still contains hidden characters
     echo 1
   fi
 }
 
 
-testPresence () {
+presence_test () {
 	if [ $1 = "$(echo $1 | grep $2)" ]
 	  then
 	    echo 0
@@ -48,51 +46,49 @@ testPresence () {
 
 
 
-###################
-####   SCRIPT  ####
-###################
+#MAIN SCRIPT
 
 
-#Remplace les accents dans les mots
-motCache=$(echo $motCache | sed 'y/áàâäçéèêëîïìôöóùúüñÂÀÄÇÉÈÊËÎÏÔÖÙÜÑ/aaaaceeeeiiiooouuunAAACEEEEIIOOUUN/')
+#Replace accents in words
+hidden_word=$(echo $hidden_word | sed 'y/áàâäçéèêëîïìôöóùúüñÂÀÄÇÉÈÊËÎÏÔÖÙÜÑ/aaaaceeeeiiiooouuunAAACEEEEIIOOUUN/')
 
-#Initialisation des compteurs
-tour=0
-fautes=0
-fautes_max=8
+#Initialization of counters
+loop=0
+faults=0
+faults_max=8
 
-#Boucle principale
-while [ $(testGagne $motCache $listeLettresCachees) = 1 ]
+#Main Loop
+while [ $(test_won $hidden_word $letter_list) = 1 ]
 do
 	clear
-	essais_restants=$(expr $fautes_max - $fautes)
+	remaining_trials=$(expr $faults_max - $faults)
 	echo "###################"
-	echo "     Tour n°$tour :"
+	echo "     Tour n°$loop :"
 	echo "###################"
-	echo "Il vous reste $essais_restants essais!"
+	echo "Il vous reste $remaining_trials essais!"
 	echo "Mot :"
-	afficheMot $motCache $listeLettresCachees
+	display_word $hidden_word $letter_list
 	echo
 	echo "Lettre à découvrir :"
-	read lettre
-	lettre=$(echo $lettre | cut -c1)
+	read letter
+	letter=$(echo $letter | cut -c1)
 	
-	if [ $(testPresence $motCache $lettre) = 1 ]
+	if [ $(presence_test $hidden_word $letter) = 1 ]
 	  then
-	    fautes=$(expr $fautes + 1)
+	    faults=$(expr $faults + 1)
 	  else
-	    decouvre $lettre
+	    discover $letter
 	fi
 	
-	tour=$(expr $tour + 1)
+	loop=$(expr $loop + 1)
 	
-	if [ $fautes = 8 ] #On verifie si le nombre de fautes maximum est atteint
+	if [ $faults = 8 ] #We check if the maximum number of faults is reached
 	  then
 	
 		echo "############################"
 		echo "     Vous avez perdu !"
 		echo "############################"
-		echo "Le mot était : $motCache"
+		echo "Le mot était : $hidden_word"
 		exit
 	
 	  else
@@ -106,5 +102,5 @@ clear
 echo "############################"
 echo "     Vous avez gagné !"
 echo "############################"
-echo "Le mot était : $motCache"
-echo "Vous avez fait $fautes faute(s)"
+echo "Le mot était : $hidden_word"
+echo "Vous avez fait $faults faute(s)"
